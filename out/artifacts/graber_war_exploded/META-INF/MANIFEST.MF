@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Created-By: IntelliJ IDEA
+Built-By: Top Developer
+Build-Jdk: 15.0.1
+Implementation-Title: graber
+Implementation-Version: 0.0.1-SNAPSHOT
+Implementation-Vendor-Id: com.graberWebApp
+Main-Class: ${start-class}
+
