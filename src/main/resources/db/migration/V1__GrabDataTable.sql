@@ -7,6 +7,7 @@ CREATE TABLE GrabDataTable (
     serp_description TEXT,
     organic_pos SMALLINT,
     block_pos SMALLINT,
+    stripped_html TEXT,
     date_added timestamp NOT NULL,
     date_updated timestamp NOT NULL
 );

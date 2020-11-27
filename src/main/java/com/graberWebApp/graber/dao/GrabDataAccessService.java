@@ -7,6 +7,10 @@ import com.graberWebApp.graber.model.SurpInfo;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.parser.JSONParser;
+import net.minidev.json.parser.ParseException;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.internal.StringUtil;
@@ -25,6 +29,7 @@ import java.sql.PreparedStatement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.*;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -39,13 +44,13 @@ public class GrabDataAccessService implements GrabDao{
 
     @Override
     public int insertGrabData(GrabData grabData) {
-        final String sql = "INSERT INTO GrabDataTable(serp_id, url, jsonArrData, serp_title, serp_description, organic_pos, block_pos, date_added, date_updated) VALUES(?,?,?::JSON,?,?,?,?,now(),now())";
-        return jdbcTemplate.update(sql, grabData.getUrl(), grabData.getJsonArrData());
+        final String sql = "INSERT INTO GrabDataTable(serp_id, url, jsonArrData, serp_title, serp_description, organic_pos, block_pos, stripped_html, date_added, date_updated) VALUES(?,?,?::JSON,?,?,?,?,?,now(),now())";
+        return jdbcTemplate.update(sql, grabData.getSerp_id(), grabData.getUrl(), grabData.getJsonArrData(), grabData.getSerp_title(), grabData.getSerp_description(), grabData.getOrganic_pos(), grabData.getBlock_pos(), grabData.getStripped_html());
     }
 
     @Override
     public int[][] insertBatchGrabData(List<GrabData> grabDataList, int batchSize) {
-        final String sql = "INSERT INTO GrabDataTable(serp_id, url, jsonArrData, serp_title, serp_description, organic_pos, block_pos, date_added, date_updated) VALUES(?,?,?::JSON,?,?,?,?, now(),now())";
+        final String sql = "INSERT INTO GrabDataTable(serp_id, url, jsonArrData, serp_title, serp_description, organic_pos, block_pos, stripped_html,date_added, date_updated) VALUES(?,?,?::JSON,?,?,?,?,?, now(),now())";
         return jdbcTemplate.batchUpdate(sql,
                 grabDataList,
                 batchSize,
@@ -57,6 +62,7 @@ public class GrabDataAccessService implements GrabDao{
                     ps.setString(1, argument.getSerp_description());
                     ps.setShort(1, argument.getOrganic_pos());
                     ps.setShort(1, argument.getBlock_pos());
+                    ps.setString(1, argument.getStripped_html());
                 });
     }
 
@@ -73,6 +79,7 @@ public class GrabDataAccessService implements GrabDao{
                     "",
                     (short)0,
                     (short)0,
+                    "",
                     resultSet.getString("date_added"),
                     resultSet.getString("date_updated")
             );
@@ -82,20 +89,21 @@ public class GrabDataAccessService implements GrabDao{
     @Override
     public Optional<GrabData> selectGrabDataById(int id)
     {
-        final String sql = "SELECT id, url, jsonArrData, date_added, date_updated FROM GrabDataTable WHERE id = ?";
+        final String sql = "SELECT * FROM GrabDataTable WHERE id = ?";
         GrabData grabData = jdbcTemplate.queryForObject(
                 sql,
                 new Object[]{id},
                 (resultSet, i) -> {
             return new GrabData(
                     resultSet.getInt("id"),
-                    resultSet.getInt("surp_id"),
+                    resultSet.getInt("serp_id"),
                     resultSet.getString("url"),
                     resultSet.getString("jsonArrData"),
                     resultSet.getString("serp_title"),
                     resultSet.getString("serp_description"),
                     resultSet.getShort("organic_pos"),
                     resultSet.getShort("block_pos"),
+                    resultSet.getString("stripped_html"),
                     resultSet.getString("date_added"),
                     resultSet.getString("date_updated")
             );
@@ -121,10 +129,10 @@ public class GrabDataAccessService implements GrabDao{
     @Override
     public int insertSurpInfo(SurpInfo surpInfo){
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        final String sql = "INSERT INTO SerpInfoTable(keyword, location, search_engine, search_lang, device, serpArrData, organic, people_also_ask, related_searches, featured_snippet, fetch_date) VALUES(?,?,?,?,?,?::JSON,?::JSON,?::JSON,?::JSON,?::JSON,?)";
+        final String sql = "INSERT INTO SerpInfoTable(keyword, location, search_engine, search_lang, device, serpArrData, organic, people_also_ask, related_searches, featured_snippet, fetch_date) VALUES(?,?,?,?,?,?::JSON,?::JSON,?::JSON,?::JSON,?::JSON, now())";
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection
-                    .prepareStatement(sql);
+                    .prepareStatement(sql, new String[] { "id" });
             ps.setString(1, surpInfo.getKeyword());
             ps.setString(2, surpInfo.getLocation());
             ps.setString(3, surpInfo.getSearch_engine());
@@ -135,15 +143,17 @@ public class GrabDataAccessService implements GrabDao{
             ps.setObject(8, surpInfo.getPeople_also_ask());
             ps.setObject(9, surpInfo.getRelated_searches());
             ps.setObject(10, surpInfo.getFeatured_snippet());
-            ps.setString(11, surpInfo.getFetch_date());
             return ps;
         }, keyHolder);
+        if (keyHolder.getKey() != null){
+            return (int) keyHolder.getKey();
+        }
+        return 0;
 
-        return (int) keyHolder.getKey();
     }
     @Override
     public List<SurpInfo> selectAllSurpInfo(){
-        final String sql = "SELECT keyword, location, search_engine, search_lang, device, fetch_date FROM SerpInfoTable ORDER BY fetch_date DESC";
+        final String sql = "SELECT id, keyword, location, search_engine, search_lang, device, fetch_date FROM SerpInfoTable ORDER BY fetch_date DESC";
         return jdbcTemplate.query(sql, (resultSet, i) -> {
             return new SurpInfo(
                     resultSet.getInt("id"),
@@ -163,7 +173,7 @@ public class GrabDataAccessService implements GrabDao{
     }
     @Override
     public Optional<SurpInfo> selectSurpInfoById(int id){
-        final String sql = "SELECT id, keyword, location, search_engine, search_lang, device, serpArrData, organic, people_also_ask, related_searches, featured_snippet, fetch_date FROM SerpInfoTable WHERE id = ?";
+        final String sql = "SELECT * FROM SerpInfoTable WHERE id = ?";
         SurpInfo surpInfo = jdbcTemplate.queryForObject(
                 sql,
                 new Object[]{id},
@@ -202,6 +212,7 @@ public class GrabDataAccessService implements GrabDao{
                                 rs.getString("serp_description"),
                                 rs.getShort("organic_pos"),
                                 rs.getShort("block_pos"),
+                                rs.getString("stripped_html"),
                                 rs.getString("date_added"),
                                 rs.getString("date_updated")
                         )
@@ -307,8 +318,8 @@ public class GrabDataAccessService implements GrabDao{
         return clearList;
     }
 
-    public String grabWebPage(String url){
-        String grabJson = "";
+    public GrabResult grabWebPage(String url){
+        String grabJson = "[]";
         List<String> unwatedTagList = new ArrayList<String>();
         unwatedTagList.add("header");
         unwatedTagList.add("footer");
@@ -400,6 +411,7 @@ public class GrabDataAccessService implements GrabDao{
             }
 
             Element bodyElement = doc.body();
+            String stripped_html = bodyElement.html();
             data.put("all_h1_text",generateListString(bodyElement.select("h1")));
             data.put("all_h2_text",generateListString(bodyElement.select("h2")));
             data.put("all_h3_text",generateListString(bodyElement.select("h3")));
@@ -517,7 +529,7 @@ public class GrabDataAccessService implements GrabDao{
 
             try {
                 grabJson = objectMapper.writeValueAsString(data);
-                return grabJson;
+                return new GrabResult(grabJson, stripped_html);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -526,19 +538,34 @@ public class GrabDataAccessService implements GrabDao{
             ex.printStackTrace();
         }
 
-        return grabJson;
+        return new GrabResult(grabJson, "");
     }
+    final class GrabResult {
+        private final String grabJson;
+        private final String html;
 
+        public GrabResult(String grabJson, String html) {
+            this.grabJson = grabJson;
+            this.html = html;
+        }
+
+        public String getGrabJson() {
+            return grabJson;
+        }
+
+        public String getHtml() {
+            return html;
+        }
+    }
     @Override
     public int startGrab(String url) {
         System.out.print(url);
 //        GrabData grabData = new GrabData(0 ,url, grabWebPage(url), "", "");
 //        insertGrabData(grabData);
-        startAdvancedGrab();
         return 0;
     }
 
-    public int startAdvancedGrab(){
+    public String getSurpApiData(String keyword, String location, String lang, String device){
         String url = "https://api.dataforseo.com/v3/serp/google/organic/live/advanced";
         String name = "leebin424224@gmail.com";
         String password = "73130ec81bd33195";
@@ -547,22 +574,125 @@ public class GrabDataAccessService implements GrabDao{
         System.out.println("Base64 encoded auth string: " + authStringEnc);
         Client restClient = Client.create();
         WebResource webResource = restClient.resource(url);
+        String input = "";
+        if (location == null || location.equals("")){
+            input = "[\n    {\n        \"language_code\": \""+lang+"\",\n        \"location_name\": \"United States\",\n        \"keyword\": \""+keyword+"\",\n        \"device\": \""+device+"\" }\n]";
+        }else {
+            input = "[\n    {\n        \"language_code\": \""+lang+"\",\n        \"location_code\": \""+location+"\",\n      \"keyword\": \""+keyword+"\",\n        \"device\": \""+device+"\" }\n]";
+        }
 
-        String input = "[\n    {\n        \"language_code\": \"en\",\n        \"location_name\": \"United States\",\n        \"keyword\": \"PostgreSQL vs. SQL Server\"\n    }\n]";
         ClientResponse resp = webResource.accept("application/json")
                 .header("Authorization", "Basic " + authStringEnc)
                 .type(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, input);
         if(resp.getStatus() != 200){
             System.err.println("Unable to connect to the server");
+            return null;
         }
-        String output = resp.getEntity(String.class);
-        System.out.println("response: "+output);
-
-        return 0;
+        return resp.getEntity(String.class);
     }
 
+    public int startSurp(String keyword, String location, String lang, String device){
+        String resJson = getSurpApiData(keyword, location, lang, device);
+
+        if (resJson != null){
+            JSONParser parser = new JSONParser();
+            try {
+                JSONObject json = (JSONObject) parser.parse(resJson);
+                int statusCode = Integer.parseInt(json.getAsString("status_code"));
+                if (statusCode != 20000){
+                    return 0;
+                }
+                System.out.println("grabbed surp api data!");
+                String tasks = json.getAsString("tasks");
+                JSONArray tasksArray = (JSONArray) parser.parse(tasks);
+                JSONObject taskJson = (JSONObject) tasksArray.get(0);
+                JSONArray resultArray = (JSONArray)taskJson.get("result");
+                JSONObject resultJson = (JSONObject)resultArray.get(0);
+                JSONArray itemArray = (JSONArray) resultJson.get("items");
+                JSONArray organicArray = new JSONArray();
+                JSONArray people_also_askArray = new JSONArray();
+                JSONArray related_searchesArray = new JSONArray();
+                JSONArray featured_snippetArray = new JSONArray();
+                int organicCounter = 0;
+                for (int i = 0; i < itemArray.size(); i ++){
+                    JSONObject itemJson = (JSONObject) itemArray.get(i);
+                    String itemType = itemJson.getAsString("type");
+                    if (itemType.equals("organic") && organicCounter < 20){
+                        organicArray.appendElement(itemJson);
+                        organicCounter ++;
+                    }else if (itemType.equals("people_also_ask")){
+                        people_also_askArray.appendElement(itemJson);
+                    }else if (itemType.equals("related_searches")){
+                        related_searchesArray.appendElement(itemJson);
+                    }else if (itemType.equals("featured_snippet")){
+                        featured_snippetArray.appendElement(itemJson);
+                    }
+
+                }
+
+                SurpInfo newSurpInfo = new SurpInfo(
+                        0,
+                        keyword,
+                        location,
+                        "google",
+                        lang,
+                        device,
+                        resJson,
+                        organicArray.toJSONString(),
+                        people_also_askArray.toJSONString(),
+                        related_searchesArray.toJSONString(),
+                        featured_snippetArray.toJSONString(),
+                        ""
+                );
+                int surpId = insertSurpInfo(newSurpInfo);
+                System.out.println(surpId);
+                if (surpId > 0){
+                    ExecutorService executorService = Executors.newFixedThreadPool(10);
+                    Map<Future, JSONObject> callTasks = new LinkedHashMap<Future, JSONObject>();
+                    for (int i = 0; i < organicArray.size(); i ++){
+                        JSONObject organicJson = (JSONObject)organicArray.get(i);
+                        String url = organicJson.getAsString("url");
+                        Callable callable = new Callable() {
+                            public GrabResult call() throws Exception {
+                                return grabWebPage(url);
+                            }
+                        };
+                        Future future = executorService.submit(callable);
+                        callTasks.put(future, organicJson);
+
+                    }
+                    callTasks.forEach((future, organicJson) -> {
+                        try {
+                            String url = organicJson.getAsString("url");
+                            System.out.println(url);
+                            String serpTitle = organicJson.getAsString("title");
+                            String serpDescription = organicJson.getAsString("description");
+                            short organicPos =  Short.parseShort(organicJson.getAsString("rank_group"));
+                            short blockPos = Short.parseShort(organicJson.getAsString("rank_absolute"));
+
+                            GrabResult grabResult = (GrabResult)future.get(120, TimeUnit.SECONDS);
+                            GrabData grabData = new GrabData(0,surpId, url, grabResult.getGrabJson(), serpTitle, serpDescription, organicPos, blockPos, grabResult.getHtml(),"","");
+                            insertGrabData(grabData);
+                        } catch (InterruptedException | ExecutionException
+                                | TimeoutException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    executorService.shutdown();
+
+                }
+
+                return surpId;
 
 
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return 0;
+
+    }
 
 }

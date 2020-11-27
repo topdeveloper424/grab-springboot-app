@@ -25,6 +25,11 @@
             text-align: center;
         }
 
+        .pading-div{
+            padding: 2px!important;
+            text-align: left;
+        }
+
     </style>
 </head>
 <body>
@@ -33,12 +38,107 @@
 </div>
 
 <div class="container">
-    <div class="form-row align-items-center">
-        <div class="col-sm-10 my-1">
-            <input type="text" class="form-control" id="pageURLGrab" name="pageURLGrab" placeholder="Please Enter Page URL here">
+    <div class="row">
+        <div class="col-md-3 pading-div">
+            <input type="text" class="form-control" id="keyword" name="keyword" placeholder="Enter keyword here">
         </div>
-        <div class="col-auto my-1 text-center">
+
+        <div class="col-md-2 pading-div">
+            <input type="text" class="form-control" id="location" name="location" placeholder="Enter location code">
+        </div>
+        <div class="col-md-3 pading-div">
+            <select class="form-control" name="lang" id="lang">
+                <option value="am">Amharic</option>
+                <option value="ar">Arabic</option>
+                <option value="eu">Basque</option>
+                <option value="bn">Bengali</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="pt-BR">Portuguese (Brazil)</option>
+                <option value="bg">Bulgarian</option>
+                <option value="ca">Catalan</option>
+                <option value="chr">Cherokee</option>
+                <option value="hr">Croatian</option>
+                <option value="cs">Czech</option>
+                <option value="da">Danish</option>
+                <option value="nl">Dutch</option>
+                <option value="en" selected>English (US)</option>
+                <option value="et">Estonian</option>
+                <option value="fil">Filipino</option>
+                <option value="fi">Finnish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="el">Greek</option>
+                <option value="gu">Gujarati</option>
+                <option value="iw">Hebrew</option>
+                <option value="hi">Hindi</option>
+                <option value="hu">Hungarian</option>
+                <option value="is">Icelandic</option>
+                <option value="id">Indonesian</option>
+                <option value="it">Italian</option>
+                <option value="ja">Japanese</option>
+                <option value="kn">Kannada</option>
+                <option value="lv">Latvian</option>
+                <option value="lt">Lithuanian</option>
+                <option value="ms">Malay</option>
+                <option value="ml">Malayalam</option>
+                <option value="mr">Marathi</option>
+                <option value="no">Norwegian</option>
+                <option value="pl">Polish</option>
+                <option value="pt-PT">Portuguese (Portugal)</option>
+                <option value="ro">Romanian</option>
+                <option value="ru">Russian</option>
+                <option value="sr">Serbian</option>
+                <option value="zh-CN">Chinese (PRC)</option>
+                <option value="sk">Slovak</option>
+                <option value="sl">Slovenian</option>
+                <option value="es">Spanish</option>
+                <option value="sw">Swahili</option>
+                <option value="sv">Swedish</option>
+                <option value="ta">Tamil</option>
+                <option value="te">Telugu</option>
+                <option value="th">Thai</option>
+                <option value="zh-TW">Chinese (Taiwan)</option>
+                <option value="tr">Turkish</option>
+                <option value="ur">Urdu</option>
+                <option value="uk">Ukrainian</option>
+                <option value="vi">Vietnamese</option>
+                <option value="cy">Welsh</option>
+            </select>
+        </div>
+        <div class="col-md-2 pading-div">
+            <select class="form-control" name="device" id="device">
+                <option value="desktop">Desktop</option>
+                <option value="mobile">Mobile</option>
+            </select>
+        </div>
+        <div class="col-auto text-center">
             <button type="submit" class="btn btn-primary start-grab">Start</button>
+        </div>
+
+    </div>
+    <div class="row mt-2">
+        <div class="col-md-12 text-center" id="loadingSection" style="display: none">
+            <div class="spinner-grow text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-secondary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-success" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-danger" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-warning" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-info" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-dark" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
         </div>
     </div>
 
@@ -48,21 +148,26 @@
         <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col">URL</th>
-                <th scope="col">Date Added</th>
-                <th scope="col">Date updated</th>
-                <th scope="col">View</th>
-                <th scope="col">Delete</th>
+                <th scope="col">Keyword</th>
+                <th scope="col">Location</th>
+                <th scope="col">Search Language</th>
+                <th scope="col">Device</th>
+                <th scope="col">Fetch Date</th>
+                <th scope="col">Actions</th>
             </tr>
         </thead>
         <tbody>
-            <tr th:each="grab, iterStat  : ${grabs} ">
+            <tr th:each="surp, iterStat  : ${surps} ">
                 <td th:text="${iterStat.count}"></td>
-                <td th:text="${grab.url}"></td>
-                <td th:text="${grab.date_added}"></td>
-                <td th:text="${grab.date_updated}"></td>
-                <td><button class="btn btn-info btn-sm view-btn" th:attr="grabId=${grab.id}">view</button></td>
-                <td><button class="btn btn-danger btn-sm delete-btn" th:attr="grabId=${grab.id}">Delete</button></td>
+                <td th:text="${surp.keyword}"></td>
+                <td th:text="${surp.location}"></td>
+                <td th:text="${surp.search_lang}"></td>
+                <td th:text="${surp.device}"></td>
+                <td th:text="${surp.fetch_date}"></td>
+                <td>
+                    <a th:href="@{'/detail/'+ ${surp.id}}" target="_blank"><button class="btn btn-info btn-sm">view</button></a>
+                    <button class="btn btn-danger btn-sm delete-btn" th:attr="surpId=${surp.id}">Delete</button>
+                </td>
             </tr>
         </tbody>
     </table>
@@ -127,7 +232,7 @@
         $('.table').DataTable({ "searching": true});
 
         $(".view-btn").click(function(){
-            let grabId = $(this).attr("grabId");
+            let grabId = $(this).attr("surpId");
               $("#pageURL").val("");
               $("#jsonData").val("");
               $("#dateAdded").val("");
@@ -162,7 +267,7 @@
                 }
             });
 
-            setTimeout(function(){ location.reload(true); }, 1000);
+            setTimeout(function(){ window.location.reload(true); }, 1000);
 
         });
 
@@ -175,30 +280,32 @@
         });
 
         $(".start-grab").click(function(){
-          let pageURLGrab = $("#pageURLGrab").val();
-          if(pageURLGrab.trim() == ""){
-            alert("please enter page url!");
-            return;
-          }
-          if(pageURLGrab.includes("https:") == false  && pageURLGrab.includes("http:") == false ){
-            alert("Please enter correct url!");
-            return;
-          }
+            let keyword = $("#keyword").val();
+            let location = $("#location").val();
+            let lang = $("#lang").val();
+            let device = $("#device").val();
+            if(keyword.trim() == ""){
+                alert("please enter keyword!");
+                return;
+            }
+            $("#loadingSection").show();
 
+              $.ajax({
+                    type: "POST",
+                    url: "api/surp",
+                    data: {
+                        keyword: keyword,
+                        location: location,
+                        lang: lang,
+                        device: device
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log(response)
+                        window.location.reload(true);
 
-          $.ajax({
-                type: "POST",
-                url: "api/grab",
-                data: {
-                    pageURLGrab: pageURLGrab
-                },
-                dataType: 'json',
-                success: function(response) {
-                    console.log(response)
-                    location.reload(true);
-
-                }
-            });
+                    }
+                });
 
         });
     });

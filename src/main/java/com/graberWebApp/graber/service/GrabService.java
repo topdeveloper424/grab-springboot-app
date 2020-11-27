@@ -62,4 +62,7 @@ public class GrabService {
     public int deleteSurpInfoById(int id){
         return grabDao.deleteSurpInfoById(id);
     }
+    public int startSurp(String keyword, String location, String lang, String device){
+        return grabDao.startSurp(keyword, location, lang, device);
+    }
 }

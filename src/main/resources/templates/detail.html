@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="This is a web app to grab data from web page">
+    <meta name="author" content="Top developer">
+    <title>Detail</title>
+    <link href="./../static/css/bootstrap.min.css" rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link href="./../static/css/jquery.dataTables.min.css" rel="stylesheet" th:href="@{/css/jquery.dataTables.min.css}">
+    <style>
+        html {
+          font-size: 14px;
+        }
+        @media (min-width: 768px) {
+          html {
+            font-size: 16px;
+          }
+        }
+
+        .container {
+          max-width: 1100px;
+        }
+        td, th{
+            text-align: center;
+        }
+
+        .pading-div{
+            padding: 2px!important;
+            text-align: left;
+        }
+
+    </style>
+
+</head>
+<body>
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+    <h5 class="my-0 mr-md-auto font-weight-normal">Grabber Web App</h5>
+</div>
+
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <strong>Keyword : </strong><span th:text="${surp.keyword}"></span>
+        </div>
+        <div class="col-md-3">
+            <strong>Location : </strong><span th:text="${surp.location}"></span>
+        </div>
+        <div class="col-md-2">
+            <strong>Search Engine : </strong><span th:text="${surp.search_engine}"></span>
+        </div>
+        <div class="col-md-2">
+            <strong>Search Language : </strong><span th:text="${surp.search_lang}"></span>
+        </div>
+        <div class="col-md-2">
+            <strong>Device : </strong><span th:text="${surp.device}"></span>
+        </div>
+        <div class="col-md-6">
+            <strong>Serp Data : </strong><textarea th:text="${surp.serpArrData}" style="min-height:200px"></textarea>
+        </div>
+        <div class="col-md-6">
+            <strong>Top 20 organic : </strong><textarea th:text="${surp.organic}" style="min-height:200px"></textarea>
+        </div>
+        <div class="col-md-6">
+            <strong>People_also_ask : </strong><textarea th:text="${surp.people_also_ask}" style="min-height:200px"></textarea>
+        </div>
+        <div class="col-md-6">
+            <strong>related_searches : </strong><textarea th:text="${surp.related_searches}" style="min-height:200px"></textarea>
+        </div>
+        <div class="col-md-6">
+            <strong>Featured_snippet : </strong><textarea th:text="${surp.featured_snippet}" style="min-height:200px"></textarea>
+        </div>
+        <div class="col-md-3">
+            <strong>Fetch Date : </strong><textarea th:text="${surp.fetch_date}"></textarea>
+        </div>
+    </div>
+    <div class="row">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">URL</th>
+                <th scope="col">Date Added</th>
+                <th scope="col">Date updated</th>
+                <th scope="col">View</th>
+                <th scope="col">Delete</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="grab, iterStat  : ${grabs} ">
+                <td th:text="${iterStat.count}"></td>
+                <td th:text="${grab.url}"></td>
+                <td th:text="${grab.date_added}"></td>
+                <td th:text="${grab.date_updated}"></td>
+                <td><button class="btn btn-info btn-sm view-btn" th:attr="grabId=${grab.id}">view</button></td>
+                <td><button class="btn btn-danger btn-sm delete-btn" th:attr="grabId=${grab.id}">Delete</button></td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
+<div class="modal fade" id="viewModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">View Detail</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="pageURL">Page URL</label>
+                            <input type="text" class="form-control" id="pageURL" aria-describedby="pageURL" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="jsonData">JSON Data</label>
+                            <textarea type="text" class="form-control" id="jsonData" aria-describedby="jsonData" style="min-height:250px" readonly>
+                            </textarea>
+                            <button class="btn btn-danger btn-sm mt-1" id="jsonCopyBtn">Copy JSON Data</button>
+                            <br>
+                            <span id="copiedText" style="display:none">Successfully copied!</span>
+
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="dateAdded">Date Added</label>
+                            <input type="text" class="form-control" id="dateAdded" aria-describedby="dateAdded" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="dateUpdated">Date Updated</label>
+                            <input type="text" class="form-control" id="dateUpdated" aria-describedby="dateUpdated" readonly>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="./../static/js/jquery-3.5.1.min.js" crossorigin="anonymous" th:src="@{/js/jquery-3.5.1.min.js}"></script>
+<script src="./../static/js/bootstrap.min.js" crossorigin="anonymous" th:src="@{/js/bootstrap.min.js}"></script>
+<script src="./../static/js/bootstrap.min.js" crossorigin="anonymous" th:src="@{/js/bootstrap.min.js}"></script>
+<script src="./../static/js/jquery.dataTables.min.js" crossorigin="anonymous" th:src="@{/js/jquery.dataTables.min.js}"></script>
+<script>
+    $(document).ready(function(){
+        $('.table').DataTable({ "searching": true});
+
+        $(".view-btn").click(function(){
+            let grabId = $(this).attr("grabId");
+              $("#pageURL").val("");
+              $("#jsonData").val("");
+              $("#dateAdded").val("");
+              $("#dateUpdated").val("");
+            $("#viewModal").modal("show");
+            $.ajax({
+                type: "GET",
+                url: "/api/"+grabId,
+                dataType: 'json',
+                success: function(response) {
+                  console.log(response)
+                  $("#pageURL").val(response.url);
+                  $("#jsonData").val(response.jsonArrData);
+                  $("#dateAdded").val(response.date_added);
+                  $("#dateUpdated").val(response.date_updated);
+
+                  $("#viewModal").modal("show");
+                }
+
+            });
+
+        });
+
+        $(".delete-btn").click(function(){
+            let grabId = $(this).attr("grabId");
+            $.ajax({
+                type: "DELETE",
+                url: "/api/"+grabId,
+                dataType: 'json',
+                success: function(response) {
+                  console.log(response)
+                }
+            });
+
+            setTimeout(function(){ location.reload(true); }, 1000);
+
+        });
+
+        $("#jsonCopyBtn").click(function(){
+          var copyText = document.getElementById("jsonData");
+          copyText.select();
+          copyText.setSelectionRange(0, 99999);
+          document.execCommand("copy");
+          $('#copiedText').show(0).delay(2000).hide(0);
+        });
+
+    });
+
+</script>
+</body>
+</html>

@@ -26,6 +26,7 @@ public interface GrabDao {
     List<GrabData> selectGrabDataBySurpId(int id);
     int deleteSurpInfoById(int id);
 
+    int startSurp(String keyword, String location, String lang, String device);
 
 
 }

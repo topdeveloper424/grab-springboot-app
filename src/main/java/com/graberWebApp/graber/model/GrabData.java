@@ -9,10 +9,11 @@ public class GrabData {
     private final String serp_description;
     private final short organic_pos;
     private final short block_pos;
+    private final String stripped_html;
     private final String date_added;
     private final String date_updated;
 
-    public GrabData(int id, int serp_id, String url, String jsonArrData, String serp_title, String serp_description, short organic_pos, short block_pos, String date_added, String date_updated){
+    public GrabData(int id, int serp_id, String url, String jsonArrData, String serp_title, String serp_description, short organic_pos, short block_pos, String stripped_html, String date_added, String date_updated){
         this.id = id;
         this.serp_id = serp_id;
         this.url = url;
@@ -21,6 +22,7 @@ public class GrabData {
         this.serp_description = serp_description;
         this.organic_pos = organic_pos;
         this.block_pos = block_pos;
+        this.stripped_html = stripped_html;
         this.date_added = date_added;
         this.date_updated = date_updated;
     }
@@ -63,5 +65,9 @@ public class GrabData {
 
     public short getBlock_pos() {
         return block_pos;
+    }
+
+    public String getStripped_html() {
+        return stripped_html;
     }
 }
